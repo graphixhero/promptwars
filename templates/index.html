@@ -3,88 +3,142 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VibeTravel | Find Your Next Destination</title>
+    <title>VibeTravel — Find Your Next Destination</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
+
+    <div class="bg-orb orb-1"></div>
+    <div class="bg-orb orb-2"></div>
+    <div class="grain"></div>
+
     <div class="container">
-        <header>
-            <h1>VibeTravel</h1>
-            <p>Skip the destination. Pick your vibe.</p>
+
+        <!-- HERO -->
+        <header class="hero">
+            <div class="hero-eyebrow">✦ Vibe-matched travel</div>
+            <h1 class="hero-title">Vibe<em>Travel</em></h1>
+            <p class="hero-sub">Skip the destination. Pick your vibe.</p>
         </header>
 
         <main>
-            <div id="vibe-form-container">
+            <!-- FORM -->
+            <div id="vibe-form-container" class="form-card">
+
                 <div class="form-grid">
                     <div class="form-group">
-                        <label for="travelers">How many travelers?</label>
-                        <input type="number" id="travelers" min="1" max="10" value="1">
+                        <label for="travelers">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            Travelers
+                        </label>
+                        <input type="number" id="travelers" min="1" max="10" value="2">
                     </div>
 
                     <div class="form-group">
-                        <label for="budget">Total Budget: $<span id="budget-val">5250</span></label>
-                        <input type="range" id="budget" min="500" max="10000" step="100" value="5250">
+                        <label for="budget">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                            Budget — <span class="budget-amount">$<span id="budget-val">5,250</span></span>
+                        </label>
+                        <div class="slider-wrap">
+                            <input type="range" id="budget" min="500" max="10000" step="100" value="5250">
+                            <div class="slider-labels"><span>$500</span><span>$10k</span></div>
+                        </div>
                     </div>
 
                     <div class="form-group full-width">
-                        <label>Pick your vibe (Select up to 3)</label>
+                        <label>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                            Your vibe
+                            <span class="label-hint">pick up to 3</span>
+                        </label>
                         <div class="pills-group" id="vibe-pills">
-                            <button type="button" class="pill" data-vibe="Aloof">Aloof</button>
-                            <button type="button" class="pill" data-vibe="Chaos">Chaos</button>
-                            <button type="button" class="pill" data-vibe="History">History</button>
-                            <button type="button" class="pill" data-vibe="Fashion">Fashion</button>
-                            <button type="button" class="pill" data-vibe="Nature">Nature</button>
-                            <button type="button" class="pill" data-vibe="Spiritual">Spiritual</button>
-                            <button type="button" class="pill" data-vibe="Foodie">Foodie</button>
-                            <button type="button" class="pill" data-vibe="Luxury">Luxury</button>
-                            <button type="button" class="pill" data-vibe="Offbeat">Offbeat</button>
-                            <button type="button" class="pill" data-vibe="Romance">Romance</button>
+                            <button type="button" class="pill" data-vibe="Aloof">🧊 Aloof</button>
+                            <button type="button" class="pill" data-vibe="Chaos">⚡ Chaos</button>
+                            <button type="button" class="pill" data-vibe="History">🏛 History</button>
+                            <button type="button" class="pill" data-vibe="Fashion">👗 Fashion</button>
+                            <button type="button" class="pill" data-vibe="Nature">🌿 Nature</button>
+                            <button type="button" class="pill" data-vibe="Spiritual">🕯 Spiritual</button>
+                            <button type="button" class="pill" data-vibe="Foodie">🍜 Foodie</button>
+                            <button type="button" class="pill" data-vibe="Luxury">💎 Luxury</button>
+                            <button type="button" class="pill" data-vibe="Offbeat">🌀 Offbeat</button>
+                            <button type="button" class="pill" data-vibe="Romance">🌹 Romance</button>
                         </div>
                     </div>
                 </div>
 
-                <button id="find-trip-btn" class="submit-btn">Find my trip</button>
+                <div class="form-footer">
+                    <div id="vibe-counter" class="vibe-counter">No vibes selected</div>
+                    <button id="find-trip-btn" class="submit-btn">
+                        <span class="btn-text">Find My Trip</span>
+                        <span class="btn-icon">→</span>
+                        <span class="btn-loader"></span>
+                    </button>
+                </div>
             </div>
 
-            <!-- ── RESULTS ── -->
+            <!-- RESULTS -->
             <div id="results-container" class="hidden">
 
-                <h2 class="results-heading">Your top matches</h2>
+                <div class="results-header">
+                    <h2 class="results-title">Your Matches</h2>
+                    <p class="results-sub" id="results-sub"></p>
+                </div>
 
-                <!-- Destination cards -->
                 <div id="dest-cards" class="dest-grid"></div>
 
-                <!-- Map section -->
+                <!-- Map -->
                 <div id="map-section" class="map-section hidden">
-                    <h3 class="map-title" id="map-label">Viewing on map</h3>
+                    <div class="map-header">
+                        <h3 id="map-label" class="map-title">Viewing on map</h3>
+                        <button id="map-close" class="map-close">✕ Close</button>
+                    </div>
                     <div class="map-wrapper">
-                        <iframe
-                            id="map-frame"
-                            class="map-frame"
-                            loading="lazy"
-                            allowfullscreen
-                            referrerpolicy="no-referrer-when-downgrade"
-                            src="">
-                        </iframe>
+                        <iframe id="map-frame" class="map-frame" loading="lazy" allowfullscreen referrerpolicy="no-referrer-when-downgrade" src=""></iframe>
                     </div>
                 </div>
 
             </div>
         </main>
+
+        <footer class="site-footer">
+            Built for the Google Cloud Hackathon · Powered by Gemini AI
+        </footer>
+
     </div>
 
     <script>
-    // ── State ──────────────────────────────────────────────────────────────
     const selectedVibes = [];
     const MAX_VIBES = 3;
     let mapsKey = '';
 
-    // ── Budget slider ──────────────────────────────────────────────────────
-    const budgetSlider = document.getElementById('budget');
-    const budgetDisplay = document.getElementById('budget-val');
-    budgetSlider.oninput = (e) => budgetDisplay.textContent = Number(e.target.value).toLocaleString();
+    const VIBE_COLORS = {
+        Aloof:'#64748b', Chaos:'#f97316', History:'#92400e',
+        Fashion:'#be185d', Nature:'#15803d', Spiritual:'#6d28d9',
+        Foodie:'#b91c1c', Luxury:'#92400e', Offbeat:'#0e7490', Romance:'#be123c'
+    };
 
-    // ── Vibe pills ─────────────────────────────────────────────────────────
+    // Budget slider
+    const budgetSlider = document.getElementById('budget');
+    const budgetVal = document.getElementById('budget-val');
+    function refreshSlider(el) {
+        const pct = ((el.value - el.min) / (el.max - el.min)) * 100;
+        el.style.setProperty('--pct', pct + '%');
+        budgetVal.textContent = Number(el.value).toLocaleString();
+    }
+    budgetSlider.oninput = () => refreshSlider(budgetSlider);
+    refreshSlider(budgetSlider);
+
+    // Pills
+    const counter = document.getElementById('vibe-counter');
+    function syncCounter() {
+        counter.textContent = selectedVibes.length
+            ? selectedVibes.join(' · ')
+            : 'No vibes selected';
+    }
+
     document.querySelectorAll('.pill').forEach(pill => {
         pill.onclick = () => {
             const vibe = pill.dataset.vibe;
@@ -94,198 +148,181 @@
                 pill.classList.remove('active');
             } else {
                 if (selectedVibes.length >= MAX_VIBES) {
-                    const oldest = selectedVibes.shift();
-                    document.querySelector(`.pill[data-vibe="${oldest}"]`).classList.remove('active');
+                    const old = selectedVibes.shift();
+                    document.querySelector(`.pill[data-vibe="${old}"]`).classList.remove('active');
                 }
                 selectedVibes.push(vibe);
                 pill.classList.add('active');
             }
+            syncCounter();
         };
     });
 
-    // ── Search ─────────────────────────────────────────────────────────────
-    document.getElementById('find-trip-btn').onclick = async () => {
-        if (selectedVibes.length === 0) {
-            alert('Please pick at least one vibe.');
+    // Search
+    const findBtn = document.getElementById('find-trip-btn');
+    findBtn.onclick = async () => {
+        if (!selectedVibes.length) {
+            findBtn.classList.add('shake');
+            setTimeout(() => findBtn.classList.remove('shake'), 500);
             return;
         }
-
-        const btn = document.getElementById('find-trip-btn');
-        btn.textContent = 'Finding your trip…';
-        btn.disabled = true;
-
+        findBtn.classList.add('loading');
+        findBtn.disabled = true;
         try {
             const res = await fetch('/search', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ vibes: selectedVibes })
+                body: JSON.stringify({
+                    vibes: selectedVibes,
+                    budget: parseInt(budgetSlider.value),
+                    travelers: parseInt(document.getElementById('travelers').value)
+                })
             });
             const data = await res.json();
             mapsKey = data.map_key || '';
-            renderResults(data.destinations);
-        } catch (err) {
+            data.destinations?.length ? renderResults(data.destinations) : showEmpty();
+        } catch (e) {
+            console.error(e);
             alert('Something went wrong. Please try again.');
-            console.error(err);
         } finally {
-            btn.textContent = 'Find my trip';
-            btn.disabled = false;
+            findBtn.classList.remove('loading');
+            findBtn.disabled = false;
         }
     };
 
-    // ── Render destination cards ───────────────────────────────────────────
+    function showEmpty() {
+        document.getElementById('dest-cards').innerHTML = `
+            <div class="empty-state">
+                <div class="empty-icon">🗺️</div>
+                <p class="empty-msg">No destinations match your vibes within this budget.</p>
+                <p class="empty-hint">Try raising your budget or picking different vibes.</p>
+            </div>`;
+        document.getElementById('results-sub').textContent = '';
+        document.getElementById('results-container').classList.remove('hidden');
+    }
+
     function renderResults(destinations) {
         const container = document.getElementById('results-container');
         const grid = document.getElementById('dest-cards');
+        document.getElementById('results-sub').textContent =
+            `${destinations.length} destination${destinations.length !== 1 ? 's' : ''} matched · ${selectedVibes.join(', ')}`;
         grid.innerHTML = '';
 
         destinations.forEach((dest, i) => {
-            const card = document.createElement('div');
+            const card = document.createElement('article');
             card.className = 'dest-card';
-            card.style.animationDelay = `${i * 0.1}s`;
+            card.style.animationDelay = `${i * 0.11}s`;
 
-            // Vibe tags HTML
             const vibeTags = dest.vibes.map(v =>
-                `<span class="vibe-tag">${v}</span>`
+                `<span class="vibe-tag" style="--c:${VIBE_COLORS[v]||'#888'}">${v}</span>`
             ).join('');
 
-            // Itinerary days HTML
-            const days = dest.itinerary.map(day => `
+            const days = dest.itinerary.map(d => `
                 <div class="day-row">
-                    <div class="day-header">
-                        <span class="day-badge">Day ${day.day}</span>
-                        <span class="day-title">${day.title}</span>
+                    <div class="day-hd">
+                        <span class="day-badge">Day ${d.day}</span>
+                        <span class="day-title">${d.title}</span>
                     </div>
-                    <div class="day-activities">
-                        <div class="activity"><strong>Morning</strong> ${day.morning}</div>
-                        <div class="activity"><strong>Afternoon</strong> ${day.afternoon}</div>
-                        <div class="activity"><strong>Evening</strong> ${day.evening}</div>
+                    <div class="day-acts">
+                        <p class="activity"><b>Morning</b> ${d.morning}</p>
+                        <p class="activity"><b>Afternoon</b> ${d.afternoon}</p>
+                        <p class="activity"><b>Evening</b> ${d.evening}</p>
                     </div>
-                </div>
-            `).join('');
+                </div>`).join('');
+
+            const matchDots = '◆'.repeat(3 - i) + '◇'.repeat(i);
 
             card.innerHTML = `
-                <div class="card-top">
-                    <div class="card-rank">#${i + 1}</div>
-                    <div class="card-meta">
-                        <h3 class="city-name">${dest.city} <span class="country">${dest.country}</span></h3>
-                        <p class="tagline">${dest.tagline}</p>
-                        <div class="vibe-tags">${vibeTags}</div>
-                    </div>
-                    <div class="card-cost">
-                        <span class="cost-label">Est. cost</span>
-                        <span class="cost-value">${dest.estimated_cost}</span>
+                <div class="card-rank">
+                    <span>Match #${i + 1}</span>
+                    <span class="rank-dots">${matchDots}</span>
+                </div>
+                <div class="card-body">
+                    <h3 class="city-name">${dest.city}</h3>
+                    <p class="country-name">${dest.country}</p>
+                    <p class="tagline">${dest.tagline}</p>
+                    <div class="vibe-tags">${vibeTags}</div>
+                    <div class="cost-row">
+                        <span class="cost-val">${dest.estimated_cost}</span>
                         <span class="cost-note">per person</span>
                     </div>
                 </div>
-
                 <div class="card-actions">
                     <button class="action-btn map-btn" data-city="${dest.city}, ${dest.country}">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                        View on map
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                        Map
                     </button>
                     <button class="action-btn aqi-btn" data-city="${dest.city}" data-card="${i}">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"/></svg>
-                        Air quality
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"/></svg>
+                        Air Quality
                     </button>
-                    <div class="aqi-badge hidden" id="aqi-${i}"></div>
+                    <span class="aqi-badge hidden" id="aqi-${i}"></span>
                 </div>
-
                 <details class="itinerary-details">
                     <summary class="itinerary-toggle">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                        3-day itinerary
-                        <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        3-Day Itinerary
+                        <svg class="chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
                     </summary>
                     <div class="itinerary-body">${days}</div>
-                </details>
-            `;
+                </details>`;
 
             grid.appendChild(card);
         });
 
-        // Wire map buttons
-        grid.querySelectorAll('.map-btn').forEach(btn => {
-            btn.onclick = () => showMap(btn.dataset.city);
-        });
-
-        // Wire AQI buttons
-        grid.querySelectorAll('.aqi-btn').forEach(btn => {
-            btn.onclick = () => fetchAQI(btn.dataset.city, btn.dataset.card, btn);
-        });
+        grid.querySelectorAll('.map-btn').forEach(b => b.onclick = () => showMap(b.dataset.city));
+        grid.querySelectorAll('.aqi-btn').forEach(b => b.onclick = () => fetchAQI(b.dataset.city, b.dataset.card, b));
 
         container.classList.remove('hidden');
-        container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        setTimeout(() => container.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
     }
 
-    // ── Google Maps embed ──────────────────────────────────────────────────
+    // Map
     function showMap(cityCountry) {
-        const section = document.getElementById('map-section');
-        const frame = document.getElementById('map-frame');
-        const label = document.getElementById('map-label');
-
+        const sec = document.getElementById('map-section');
         const q = encodeURIComponent(cityCountry);
-        const key = mapsKey;
-
-        if (key) {
-            frame.src = `https://www.google.com/maps/embed/v1/place?key=${key}&q=${q}&zoom=11`;
-        } else {
-            // Fallback: OpenStreetMap via iframe (no key needed)
-            frame.src = `https://www.openstreetmap.org/export/embed.html?bbox=-180,-90,180,90&layer=mapnik&marker=0,0`;
-            // Better fallback using a search URL in an embed wrapper isn't possible without key;
-            // Use Google Maps search URL as a clickable link instead
-            frame.src = `https://maps.google.com/maps?q=${q}&output=embed`;
-        }
-
-        label.textContent = `📍 ${cityCountry}`;
-        section.classList.remove('hidden');
-        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        document.getElementById('map-frame').src = mapsKey
+            ? `https://www.google.com/maps/embed/v1/place?key=${mapsKey}&q=${q}&zoom=11`
+            : `https://maps.google.com/maps?q=${q}&output=embed`;
+        document.getElementById('map-label').textContent = `📍 ${cityCountry}`;
+        sec.classList.remove('hidden');
+        sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
+    document.getElementById('map-close').onclick = () => {
+        document.getElementById('map-section').classList.add('hidden');
+        document.getElementById('map-frame').src = '';
+    };
 
-    // ── Air Quality Index ──────────────────────────────────────────────────
-    // Uses WAQI (World Air Quality Index) API — token passed from backend
-    // OR falls back to Open-Meteo air quality (no key required)
-    async function fetchAQI(city, cardIndex, triggerBtn) {
-        const badge = document.getElementById(`aqi-${cardIndex}`);
-        badge.className = 'aqi-badge loading';
-        badge.textContent = 'Fetching AQI…';
+    // AQI
+    async function fetchAQI(city, idx, btn) {
+        const badge = document.getElementById(`aqi-${idx}`);
+        badge.className = 'aqi-badge aqi-loading';
+        badge.textContent = '…';
         badge.classList.remove('hidden');
-        triggerBtn.disabled = true;
-
+        btn.disabled = true;
         try {
-            // Open-Meteo geocoding → coordinates → air quality (no API key needed)
-            const geoRes = await fetch(
-                `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=en&format=json`
-            );
-            const geoData = await geoRes.json();
-            if (!geoData.results || geoData.results.length === 0) throw new Error('City not found');
-
-            const { latitude, longitude } = geoData.results[0];
-
-            const aqRes = await fetch(
-                `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${latitude}&longitude=${longitude}&current=us_aqi,pm10,pm2_5`
-            );
-            const aqData = await aqRes.json();
-            const aqi = aqData.current?.us_aqi;
-
-            if (aqi === undefined || aqi === null) throw new Error('No AQI data');
-
-            const { label, cls } = aqiCategory(aqi);
+            const geo = await (await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&format=json`)).json();
+            if (!geo.results?.length) throw 0;
+            const { latitude: lat, longitude: lon } = geo.results[0];
+            const aq = await (await fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=us_aqi`)).json();
+            const aqi = aq.current?.us_aqi;
+            if (aqi == null) throw 0;
+            const { label, cls } = aqiCat(aqi);
             badge.className = `aqi-badge aqi-${cls}`;
-            badge.innerHTML = `<span class="aqi-dot"></span> AQI ${aqi} — ${label}`;
-        } catch (err) {
+            badge.innerHTML = `<i class="aqi-dot"></i>AQI ${aqi} · ${label}`;
+        } catch {
             badge.className = 'aqi-badge aqi-unknown';
-            badge.textContent = 'AQI unavailable';
+            badge.textContent = 'N/A';
         }
-        triggerBtn.disabled = false;
+        btn.disabled = false;
     }
-
-    function aqiCategory(aqi) {
-        if (aqi <= 50)  return { label: 'Good',           cls: 'good' };
-        if (aqi <= 100) return { label: 'Moderate',       cls: 'moderate' };
-        if (aqi <= 150) return { label: 'Unhealthy for Sensitive Groups', cls: 'usg' };
-        if (aqi <= 200) return { label: 'Unhealthy',      cls: 'unhealthy' };
-        if (aqi <= 300) return { label: 'Very Unhealthy', cls: 'very-unhealthy' };
-        return             { label: 'Hazardous',          cls: 'hazardous' };
+    function aqiCat(n) {
+        if (n <= 50)  return { label:'Good',      cls:'good' };
+        if (n <= 100) return { label:'Moderate',  cls:'moderate' };
+        if (n <= 150) return { label:'Sensitive', cls:'usg' };
+        if (n <= 200) return { label:'Unhealthy', cls:'unhealthy' };
+        if (n <= 300) return { label:'Very Bad',  cls:'very-unhealthy' };
+        return             { label:'Hazardous',   cls:'hazardous' };
     }
     </script>
 </body>

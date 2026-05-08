@@ -6,55 +6,127 @@ load_dotenv()
 
 app = Flask(__name__)
 
-# Mock Data for Tokyo
-MOCK_FLIGHTS = [
+# Hardcoded Destination Database
+DESTINATIONS = [
     {
-        "airline": "Japan Airlines",
-        "departure": "10:00 AM",
-        "arrival": "2:00 PM",
-        "duration": "14h 0m",
-        "price": "$1,200",
-        "stops": "Non-stop"
+        "city": "Tokyo",
+        "country": "Japan",
+        "vibes": ["Chaos", "Fashion", "Foodie"],
+        "tagline": "Neon lights, high-tech subways, and world-class sushi.",
+        "estimated_cost": "$2,200",
+        "itinerary": [
+            {"day": 1, "title": "Cyberpunk Vibes", "morning": "Shibuya Crossing breakfast", "afternoon": "Harajuku fashion crawl", "evening": "Golden Gai bar hopping"},
+            {"day": 2, "title": "Tradition & Tech", "morning": "Senso-ji Temple", "afternoon": "Akihabara electric town", "evening": "Shinjuku skyline views"},
+            {"day": 3, "title": "Foodie Heaven", "morning": "Tsukiji Outer Market", "afternoon": "TeamLab Borderless art", "evening": "Omakase dinner"}
+        ]
     },
     {
-        "airline": "All Nippon Airways",
-        "departure": "12:30 PM",
-        "arrival": "4:45 PM",
-        "duration": "14h 15m",
-        "price": "$1,350",
-        "stops": "Non-stop"
+        "city": "Kyoto",
+        "country": "Japan",
+        "vibes": ["History", "Spiritual", "Aloof"],
+        "tagline": "Ancient temples, bamboo forests, and silent zen gardens.",
+        "estimated_cost": "$1,800",
+        "itinerary": [
+            {"day": 1, "title": "The Golden Path", "morning": "Kinkaku-ji Temple", "afternoon": "Ryoan-ji Zen Garden", "evening": "Gion geisha district walk"},
+            {"day": 2, "title": "Nature Whispers", "morning": "Arashiyama Bamboo Grove", "afternoon": "Tenryu-ji Temple", "evening": "Kaiseki traditional dinner"},
+            {"day": 3, "title": "Spiritual Ascent", "morning": "Fushimi Inari Shrines", "afternoon": "Kiyomizu-dera Temple", "evening": "Pontocho Alley dinner"}
+        ]
     },
     {
-        "airline": "United Airlines",
-        "departure": "8:15 AM",
-        "arrival": "3:20 PM",
-        "duration": "17h 5m",
-        "price": "$950",
-        "stops": "1 stop (SFO)"
-    }
-]
-
-MOCK_ITINERARY = [
-    {
-        "day": 1,
-        "title": "Modern Tokyo & Neon Lights",
-        "morning": "Explore Shibuya Crossing and Hachiko Statue.",
-        "afternoon": "Visit Harajuku's Takeshita Street and Meiji Jingu Shrine.",
-        "evening": "Dinner in Shinjuku and city views from the Metropolitan Government Building."
+        "city": "Paris",
+        "country": "France",
+        "vibes": ["Fashion", "Romance", "Foodie"],
+        "tagline": "The City of Light, pastries, and haute couture.",
+        "estimated_cost": "$2,500",
+        "itinerary": [
+            {"day": 1, "title": "Iconic Paris", "morning": "Eiffel Tower sunrise", "afternoon": "Louvre Museum", "evening": "Seine River cruise"},
+            {"day": 2, "title": "Chic Montmartre", "morning": "Sacre-Coeur Basilica", "afternoon": "Boulangerie crawl", "evening": "Moulin Rouge show"},
+            {"day": 3, "title": "Haute Living", "morning": "Champs-Élysées shopping", "afternoon": "Tuileries Garden", "evening": "Michelin star dinner"}
+        ]
     },
     {
-        "day": 2,
-        "title": "Tradition & Culture",
-        "morning": "Asakusa Senso-ji Temple and Nakamise Shopping Street.",
-        "afternoon": "Boat cruise on Sumida River to Odaiba.",
-        "evening": "Sushi dinner at Tsukiji Outer Market area."
+        "city": "Marrakech",
+        "country": "Morocco",
+        "vibes": ["Chaos", "History", "Offbeat"],
+        "tagline": "Spices, souks, and hidden riads in the Red City.",
+        "estimated_cost": "$1,200",
+        "itinerary": [
+            {"day": 1, "title": "The Medina", "morning": "Jemaa el-Fnaa square", "afternoon": "Bahia Palace", "evening": "Traditional tagine in a riad"},
+            {"day": 2, "title": "Hidden Gems", "morning": "Majorelle Garden", "afternoon": "Le Jardin Secret", "evening": "Rooftop terrace sunset"},
+            {"day": 3, "title": "The Desert Edge", "morning": "Agafay desert trip", "afternoon": "Souk shopping", "evening": "Berber cultural performance"}
+        ]
     },
     {
-        "day": 3,
-        "title": "Hidden Gems & Art",
-        "morning": "Ghibli Museum (requires booking) or Inokashira Park.",
-        "afternoon": "Art galleries in Roppongi Hills or Mori Art Museum.",
-        "evening": "Izakaya hopping in Golden Gai."
+        "city": "Reykjavik",
+        "country": "Iceland",
+        "vibes": ["Nature", "Aloof", "Offbeat"],
+        "tagline": "Volcanic landscapes, glaciers, and ethereal northern lights.",
+        "estimated_cost": "$2,800",
+        "itinerary": [
+            {"day": 1, "title": "Fire & Ice", "morning": "Blue Lagoon soak", "afternoon": "South Coast waterfalls", "evening": "Northern Lights hunt"},
+            {"day": 2, "title": "The Golden Circle", "morning": "Thingvellir Park", "afternoon": "Geysir geothermal area", "evening": "Gulfoss Waterfall"},
+            {"day": 3, "title": "Coastal Vibes", "morning": "Reynisfjara Black Sand Beach", "afternoon": "Skogafoss hike", "evening": "Reykjavik harbor seafood"}
+        ]
+    },
+    {
+        "city": "New York",
+        "country": "USA",
+        "vibes": ["Chaos", "Fashion", "Foodie"],
+        "tagline": "The concrete jungle where dreams are made of.",
+        "estimated_cost": "$3,000",
+        "itinerary": [
+            {"day": 1, "title": "Manhattan Core", "morning": "Central Park walk", "afternoon": "Empire State Building", "evening": "Broadway show"},
+            {"day": 2, "title": "Hip Brooklyn", "morning": "Brooklyn Bridge walk", "afternoon": "Williamsburg thrift shops", "evening": "Pizza crawl in DUMBO"},
+            {"day": 3, "title": "Museum & Art", "morning": "The MET", "afternoon": "The High Line", "evening": "Chelsea Market dinner"}
+        ]
+    },
+    {
+        "city": "Varanasi",
+        "country": "India",
+        "vibes": ["Spiritual", "History", "Offbeat"],
+        "tagline": "Life and death on the banks of the sacred Ganges.",
+        "estimated_cost": "$800",
+        "itinerary": [
+            {"day": 1, "title": "Sacred Waters", "morning": "Ganges boat sunrise", "afternoon": "Walking the Ghats", "evening": "Ganga Aarti ceremony"},
+            {"day": 2, "title": "Ancient Alleyways", "morning": "Kashi Vishwanath Temple", "afternoon": "Sarnath archaeological site", "evening": "Street food exploration"},
+            {"day": 3, "title": "Spiritual Silence", "morning": "Yoga on the river", "afternoon": "Textile market visit", "evening": "Meditation at sunset"}
+        ]
+    },
+    {
+        "city": "Amalfi Coast",
+        "country": "Italy",
+        "vibes": ["Romance", "Nature", "Luxury"],
+        "tagline": "Lemon groves, turquoise waters, and cliffside villas.",
+        "estimated_cost": "$3,500",
+        "itinerary": [
+            {"day": 1, "title": "Positano Dream", "morning": "Beach time at Spiaggia Grande", "afternoon": "Exploring cliffside shops", "evening": "Seafood with a view"},
+            {"day": 2, "title": "Island Escape", "morning": "Boat trip to Capri", "afternoon": "Blue Grotto visit", "evening": "Dinner in Anacapri"},
+            {"day": 3, "title": "The Path of Gods", "morning": "Sentiero degli Dei hike", "afternoon": "Ravello gardens", "evening": "Limoncello tasting"}
+        ]
+    },
+    {
+        "city": "Singapore",
+        "country": "Singapore",
+        "vibes": ["Foodie", "Luxury", "Fashion"],
+        "tagline": "A tropical city-state of the future and hawker feasts.",
+        "estimated_cost": "$2,400",
+        "itinerary": [
+            {"day": 1, "title": "The Future", "morning": "Gardens by the Bay", "afternoon": "Cloud Forest & Flower Dome", "evening": "Marina Bay Sands light show"},
+            {"day": 2, "title": "Hawker Culture", "morning": "Maxwell Food Centre", "afternoon": "Orchard Road shopping", "evening": "Clarke Quay nightlife"},
+            {"day": 3, "title": "Island Fun", "morning": "Sentosa Island", "afternoon": "Universal Studios", "evening": "Night Safari at the Zoo"}
+        ]
+    },
+    {
+        "city": "Patagonia",
+        "country": "Chile/Argentina",
+        "vibes": ["Nature", "Aloof", "Offbeat"],
+        "tagline": "End of the world glaciers and jagged peaks.",
+        "estimated_cost": "$2,600",
+        "itinerary": [
+            {"day": 1, "title": "Glacier Majesty", "morning": "Perito Moreno boat tour", "afternoon": "Ice trekking", "evening": "Patagonian lamb roast"},
+            {"day": 2, "title": "Towers of Granite", "morning": "Torres del Paine hike", "afternoon": "Wildlife spotting", "evening": "Cozy mountain lodge rest"},
+            {"day": 3, "title": "Lakes & Forests", "morning": "Lake Pehoé sunrise", "afternoon": "Grey Glacier viewpoint", "evening": "Stargazing in the wild"}
+        ]
     }
 ]
 
@@ -64,9 +136,28 @@ def index():
 
 @app.route("/search", methods=["POST"])
 def search():
+    data = request.get_json(force=True, silent=True)
+    if not data:
+        return jsonify({"error": "Invalid or missing JSON payload"}), 400
+    
+    user_vibes = set(data.get("vibes", []))
+    budget = int(data.get("budget", 10000))
+
+    # Calculate overlap for each destination, filtered by budget
+    matches = []
+    for dest in DESTINATIONS:
+        dest_vibes = set(dest["vibes"])
+        overlap = len(user_vibes.intersection(dest_vibes))
+        cost = int(dest["estimated_cost"].replace("$", "").replace(",", ""))
+        if cost <= budget:
+            matches.append((overlap, dest))
+
+    # Sort by overlap (descending) and take top 3
+    matches.sort(key=lambda x: x[0], reverse=True)
+    top_destinations = [m[1] for m in matches[:3]]
+    
     return jsonify({
-        "flights": MOCK_FLIGHTS,
-        "itinerary": MOCK_ITINERARY,
+        "destinations": top_destinations,
         "map_key": os.getenv("GOOGLE_MAPS_API_KEY", "")
     })
 
