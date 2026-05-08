@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Travel Planner | Explore Tokyo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Travel Planner</h1>
+            <p>Design your dream trip to Tokyo</p>
+        </header>
+
+        <main>
+            <form id="travel-form">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="destination">Destination</label>
+                        <input type="text" id="destination" name="destination" placeholder="e.g., Tokyo" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Travel Dates</label>
+                        <div class="date-inputs">
+                            <input type="date" name="depart_date" required>
+                            <input type="date" name="return_date" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="travelers">Travelers</label>
+                        <input type="number" id="travelers" name="travelers" min="1" max="10" value="1" required>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label for="budget">Budget: $<span id="budget-val">5250</span></label>
+                        <input type="range" id="budget" name="budget" min="500" max="10000" step="100" value="5250">
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label>Travel Style</label>
+                        <div class="pills-group" id="pills-group">
+                            <button type="button" class="pill" data-value="Adventure">Adventure</button>
+                            <button type="button" class="pill" data-value="Cultural">Cultural</button>
+                            <button type="button" class="pill" data-value="Relaxation">Relaxation</button>
+                            <button type="button" class="pill" data-value="Foodie">Foodie</button>
+                            <button type="button" class="pill" data-value="Luxury">Luxury</button>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="submit-btn">Search Experiences</button>
+            </form>
+
+            <div id="results" class="hidden">
+                <section class="results-section">
+                    <h2>Recommended Flights</h2>
+                    <div class="flights-grid" id="flights-grid"></div>
+                </section>
+
+                <section class="results-section">
+                    <h2>Explore the Destination</h2>
+                    <div id="map-container" class="map-container"></div>
+                </section>
+
+                <section class="results-section">
+                    <h2>Your 3-Day Itinerary</h2>
+                    <div class="itinerary-grid" id="itinerary-grid"></div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Live Budget Update
+        const budgetSlider = document.getElementById('budget');
+        const budgetDisplay = document.getElementById('budget-val');
+        budgetSlider.addEventListener('input', (e) => {
+            budgetDisplay.textContent = e.target.value;
+        });
+
+        // Style Pills Toggle
+        const pills = document.querySelectorAll('.pill');
+        pills.forEach(pill => {
+            pill.addEventListener('click', () => {
+                pill.classList.toggle('active');
+            });
+        });
+
+        // Form Submission
+        const form = document.getElementById('travel-form');
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(form);
+            const activePills = Array.from(document.querySelectorAll('.pill.active')).map(p => p.dataset.value);
+            
+            const payload = {
+                destination: formData.get('destination'),
+                depart_date: formData.get('depart_date'),
+                return_date: formData.get('return_date'),
+                travelers: formData.get('travelers'),
+                budget: formData.get('budget'),
+                styles: activePills
+            };
+
+            try {
+                const response = await fetch('/search', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) throw new Error('Search failed');
+
+                const data = await response.json();
+                console.log('map_key:', data.map_key);
+                displayResults(data);
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Something went wrong. Please try again.');
+            }
+        });
+
+        function displayResults(data) {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.classList.remove('hidden');
+
+            // Render Flights
+            const flightsGrid = document.getElementById('flights-grid');
+            flightsGrid.innerHTML = data.flights.map(flight => `
+                <div class="flight-card">
+                    <div class="airline">${flight.airline}</div>
+                    <div class="route">${flight.departure} &rarr; ${flight.arrival}</div>
+                    <div class="details">
+                        <span>${flight.duration}</span>
+                        <span>${flight.stops}</span>
+                    </div>
+                    <div class="price">${flight.price}</div>
+                </div>
+            `).join('');
+
+            // Render Map
+            const mapContainer = document.getElementById('map-container');
+            if (data.map_key) {
+                mapContainer.innerHTML = `<iframe 
+                    width="100%" 
+                    height="450" 
+                    style="border:0; border-radius: 12px;" 
+                    loading="lazy" 
+                    allowfullscreen 
+                    src="https://www.google.com/maps/embed/v1/place?key=${data.map_key}&q=Tokyo,Japan">
+                </iframe>`;
+            } else {
+                mapContainer.innerHTML = '<div class="map-error">Google Maps API key not found.</div>';
+            }
+
+            // Render Itinerary
+            const itineraryGrid = document.getElementById('itinerary-grid');
+            itineraryGrid.innerHTML = data.itinerary.map(day => `
+                <div class="itinerary-card">
+                    <div class="day-badge">Day ${day.day}</div>
+                    <h3>${day.title}</h3>
+                    <div class="activity"><strong>Morning:</strong> ${day.morning}</div>
+                    <div class="activity"><strong>Afternoon:</strong> ${day.afternoon}</div>
+                    <div class="activity"><strong>Evening:</strong> ${day.evening}</div>
+                </div>
+            `).join('');
+
+            // Scroll to results
+            resultsDiv.scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
