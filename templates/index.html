@@ -3,175 +3,290 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Travel Planner | Explore Tokyo</title>
+    <title>VibeTravel | Find Your Next Destination</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>Travel Planner</h1>
-            <p>Design your dream trip to Tokyo</p>
+            <h1>VibeTravel</h1>
+            <p>Skip the destination. Pick your vibe.</p>
         </header>
 
         <main>
-            <form id="travel-form">
+            <div id="vibe-form-container">
                 <div class="form-grid">
                     <div class="form-group">
-                        <label for="destination">Destination</label>
-                        <input type="text" id="destination" name="destination" placeholder="e.g., Tokyo" required>
+                        <label for="travelers">How many travelers?</label>
+                        <input type="number" id="travelers" min="1" max="10" value="1">
                     </div>
 
                     <div class="form-group">
-                        <label>Travel Dates</label>
-                        <div class="date-inputs">
-                            <input type="date" name="depart_date" required>
-                            <input type="date" name="return_date" required>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="travelers">Travelers</label>
-                        <input type="number" id="travelers" name="travelers" min="1" max="10" value="1" required>
+                        <label for="budget">Total Budget: $<span id="budget-val">5250</span></label>
+                        <input type="range" id="budget" min="500" max="10000" step="100" value="5250">
                     </div>
 
                     <div class="form-group full-width">
-                        <label for="budget">Budget: $<span id="budget-val">5250</span></label>
-                        <input type="range" id="budget" name="budget" min="500" max="10000" step="100" value="5250">
-                    </div>
-
-                    <div class="form-group full-width">
-                        <label>Travel Style</label>
-                        <div class="pills-group" id="pills-group">
-                            <button type="button" class="pill" data-value="Adventure">Adventure</button>
-                            <button type="button" class="pill" data-value="Cultural">Cultural</button>
-                            <button type="button" class="pill" data-value="Relaxation">Relaxation</button>
-                            <button type="button" class="pill" data-value="Foodie">Foodie</button>
-                            <button type="button" class="pill" data-value="Luxury">Luxury</button>
+                        <label>Pick your vibe (Select up to 3)</label>
+                        <div class="pills-group" id="vibe-pills">
+                            <button type="button" class="pill" data-vibe="Aloof">Aloof</button>
+                            <button type="button" class="pill" data-vibe="Chaos">Chaos</button>
+                            <button type="button" class="pill" data-vibe="History">History</button>
+                            <button type="button" class="pill" data-vibe="Fashion">Fashion</button>
+                            <button type="button" class="pill" data-vibe="Nature">Nature</button>
+                            <button type="button" class="pill" data-vibe="Spiritual">Spiritual</button>
+                            <button type="button" class="pill" data-vibe="Foodie">Foodie</button>
+                            <button type="button" class="pill" data-vibe="Luxury">Luxury</button>
+                            <button type="button" class="pill" data-vibe="Offbeat">Offbeat</button>
+                            <button type="button" class="pill" data-vibe="Romance">Romance</button>
                         </div>
                     </div>
                 </div>
 
-                <button type="submit" class="submit-btn">Search Experiences</button>
-            </form>
+                <button id="find-trip-btn" class="submit-btn">Find my trip</button>
+            </div>
 
-            <div id="results" class="hidden">
-                <section class="results-section">
-                    <h2>Recommended Flights</h2>
-                    <div class="flights-grid" id="flights-grid"></div>
-                </section>
+            <!-- ── RESULTS ── -->
+            <div id="results-container" class="hidden">
 
-                <section class="results-section">
-                    <h2>Explore the Destination</h2>
-                    <div id="map-container" class="map-container"></div>
-                </section>
+                <h2 class="results-heading">Your top matches</h2>
 
-                <section class="results-section">
-                    <h2>Your 3-Day Itinerary</h2>
-                    <div class="itinerary-grid" id="itinerary-grid"></div>
-                </section>
+                <!-- Destination cards -->
+                <div id="dest-cards" class="dest-grid"></div>
+
+                <!-- Map section -->
+                <div id="map-section" class="map-section hidden">
+                    <h3 class="map-title" id="map-label">Viewing on map</h3>
+                    <div class="map-wrapper">
+                        <iframe
+                            id="map-frame"
+                            class="map-frame"
+                            loading="lazy"
+                            allowfullscreen
+                            referrerpolicy="no-referrer-when-downgrade"
+                            src="">
+                        </iframe>
+                    </div>
+                </div>
+
             </div>
         </main>
     </div>
 
     <script>
-        // Live Budget Update
-        const budgetSlider = document.getElementById('budget');
-        const budgetDisplay = document.getElementById('budget-val');
-        budgetSlider.addEventListener('input', (e) => {
-            budgetDisplay.textContent = e.target.value;
-        });
+    // ── State ──────────────────────────────────────────────────────────────
+    const selectedVibes = [];
+    const MAX_VIBES = 3;
+    let mapsKey = '';
 
-        // Style Pills Toggle
-        const pills = document.querySelectorAll('.pill');
-        pills.forEach(pill => {
-            pill.addEventListener('click', () => {
-                pill.classList.toggle('active');
-            });
-        });
+    // ── Budget slider ──────────────────────────────────────────────────────
+    const budgetSlider = document.getElementById('budget');
+    const budgetDisplay = document.getElementById('budget-val');
+    budgetSlider.oninput = (e) => budgetDisplay.textContent = Number(e.target.value).toLocaleString();
 
-        // Form Submission
-        const form = document.getElementById('travel-form');
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const formData = new FormData(form);
-            const activePills = Array.from(document.querySelectorAll('.pill.active')).map(p => p.dataset.value);
-            
-            const payload = {
-                destination: formData.get('destination'),
-                depart_date: formData.get('depart_date'),
-                return_date: formData.get('return_date'),
-                travelers: formData.get('travelers'),
-                budget: formData.get('budget'),
-                styles: activePills
-            };
-
-            try {
-                const response = await fetch('/search', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                if (!response.ok) throw new Error('Search failed');
-
-                const data = await response.json();
-                console.log('map_key:', data.map_key);
-                displayResults(data);
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Something went wrong. Please try again.');
-            }
-        });
-
-        function displayResults(data) {
-            const resultsDiv = document.getElementById('results');
-            resultsDiv.classList.remove('hidden');
-
-            // Render Flights
-            const flightsGrid = document.getElementById('flights-grid');
-            flightsGrid.innerHTML = data.flights.map(flight => `
-                <div class="flight-card">
-                    <div class="airline">${flight.airline}</div>
-                    <div class="route">${flight.departure} &rarr; ${flight.arrival}</div>
-                    <div class="details">
-                        <span>${flight.duration}</span>
-                        <span>${flight.stops}</span>
-                    </div>
-                    <div class="price">${flight.price}</div>
-                </div>
-            `).join('');
-
-            // Render Map
-            const mapContainer = document.getElementById('map-container');
-            if (data.map_key) {
-                mapContainer.innerHTML = `<iframe 
-                    width="100%" 
-                    height="450" 
-                    style="border:0; border-radius: 12px;" 
-                    loading="lazy" 
-                    allowfullscreen 
-                    src="https://www.google.com/maps/embed/v1/place?key=${data.map_key}&q=Tokyo,Japan">
-                </iframe>`;
+    // ── Vibe pills ─────────────────────────────────────────────────────────
+    document.querySelectorAll('.pill').forEach(pill => {
+        pill.onclick = () => {
+            const vibe = pill.dataset.vibe;
+            const idx = selectedVibes.indexOf(vibe);
+            if (idx > -1) {
+                selectedVibes.splice(idx, 1);
+                pill.classList.remove('active');
             } else {
-                mapContainer.innerHTML = '<div class="map-error">Google Maps API key not found.</div>';
+                if (selectedVibes.length >= MAX_VIBES) {
+                    const oldest = selectedVibes.shift();
+                    document.querySelector(`.pill[data-vibe="${oldest}"]`).classList.remove('active');
+                }
+                selectedVibes.push(vibe);
+                pill.classList.add('active');
             }
+        };
+    });
 
-            // Render Itinerary
-            const itineraryGrid = document.getElementById('itinerary-grid');
-            itineraryGrid.innerHTML = data.itinerary.map(day => `
-                <div class="itinerary-card">
-                    <div class="day-badge">Day ${day.day}</div>
-                    <h3>${day.title}</h3>
-                    <div class="activity"><strong>Morning:</strong> ${day.morning}</div>
-                    <div class="activity"><strong>Afternoon:</strong> ${day.afternoon}</div>
-                    <div class="activity"><strong>Evening:</strong> ${day.evening}</div>
+    // ── Search ─────────────────────────────────────────────────────────────
+    document.getElementById('find-trip-btn').onclick = async () => {
+        if (selectedVibes.length === 0) {
+            alert('Please pick at least one vibe.');
+            return;
+        }
+
+        const btn = document.getElementById('find-trip-btn');
+        btn.textContent = 'Finding your trip…';
+        btn.disabled = true;
+
+        try {
+            const res = await fetch('/search', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ vibes: selectedVibes })
+            });
+            const data = await res.json();
+            mapsKey = data.map_key || '';
+            renderResults(data.destinations);
+        } catch (err) {
+            alert('Something went wrong. Please try again.');
+            console.error(err);
+        } finally {
+            btn.textContent = 'Find my trip';
+            btn.disabled = false;
+        }
+    };
+
+    // ── Render destination cards ───────────────────────────────────────────
+    function renderResults(destinations) {
+        const container = document.getElementById('results-container');
+        const grid = document.getElementById('dest-cards');
+        grid.innerHTML = '';
+
+        destinations.forEach((dest, i) => {
+            const card = document.createElement('div');
+            card.className = 'dest-card';
+            card.style.animationDelay = `${i * 0.1}s`;
+
+            // Vibe tags HTML
+            const vibeTags = dest.vibes.map(v =>
+                `<span class="vibe-tag">${v}</span>`
+            ).join('');
+
+            // Itinerary days HTML
+            const days = dest.itinerary.map(day => `
+                <div class="day-row">
+                    <div class="day-header">
+                        <span class="day-badge">Day ${day.day}</span>
+                        <span class="day-title">${day.title}</span>
+                    </div>
+                    <div class="day-activities">
+                        <div class="activity"><strong>Morning</strong> ${day.morning}</div>
+                        <div class="activity"><strong>Afternoon</strong> ${day.afternoon}</div>
+                        <div class="activity"><strong>Evening</strong> ${day.evening}</div>
+                    </div>
                 </div>
             `).join('');
 
-            // Scroll to results
-            resultsDiv.scrollIntoView({ behavior: 'smooth' });
+            card.innerHTML = `
+                <div class="card-top">
+                    <div class="card-rank">#${i + 1}</div>
+                    <div class="card-meta">
+                        <h3 class="city-name">${dest.city} <span class="country">${dest.country}</span></h3>
+                        <p class="tagline">${dest.tagline}</p>
+                        <div class="vibe-tags">${vibeTags}</div>
+                    </div>
+                    <div class="card-cost">
+                        <span class="cost-label">Est. cost</span>
+                        <span class="cost-value">${dest.estimated_cost}</span>
+                        <span class="cost-note">per person</span>
+                    </div>
+                </div>
+
+                <div class="card-actions">
+                    <button class="action-btn map-btn" data-city="${dest.city}, ${dest.country}">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                        View on map
+                    </button>
+                    <button class="action-btn aqi-btn" data-city="${dest.city}" data-card="${i}">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"/></svg>
+                        Air quality
+                    </button>
+                    <div class="aqi-badge hidden" id="aqi-${i}"></div>
+                </div>
+
+                <details class="itinerary-details">
+                    <summary class="itinerary-toggle">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        3-day itinerary
+                        <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                    </summary>
+                    <div class="itinerary-body">${days}</div>
+                </details>
+            `;
+
+            grid.appendChild(card);
+        });
+
+        // Wire map buttons
+        grid.querySelectorAll('.map-btn').forEach(btn => {
+            btn.onclick = () => showMap(btn.dataset.city);
+        });
+
+        // Wire AQI buttons
+        grid.querySelectorAll('.aqi-btn').forEach(btn => {
+            btn.onclick = () => fetchAQI(btn.dataset.city, btn.dataset.card, btn);
+        });
+
+        container.classList.remove('hidden');
+        container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    // ── Google Maps embed ──────────────────────────────────────────────────
+    function showMap(cityCountry) {
+        const section = document.getElementById('map-section');
+        const frame = document.getElementById('map-frame');
+        const label = document.getElementById('map-label');
+
+        const q = encodeURIComponent(cityCountry);
+        const key = mapsKey;
+
+        if (key) {
+            frame.src = `https://www.google.com/maps/embed/v1/place?key=${key}&q=${q}&zoom=11`;
+        } else {
+            // Fallback: OpenStreetMap via iframe (no key needed)
+            frame.src = `https://www.openstreetmap.org/export/embed.html?bbox=-180,-90,180,90&layer=mapnik&marker=0,0`;
+            // Better fallback using a search URL in an embed wrapper isn't possible without key;
+            // Use Google Maps search URL as a clickable link instead
+            frame.src = `https://maps.google.com/maps?q=${q}&output=embed`;
         }
+
+        label.textContent = `📍 ${cityCountry}`;
+        section.classList.remove('hidden');
+        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    // ── Air Quality Index ──────────────────────────────────────────────────
+    // Uses WAQI (World Air Quality Index) API — token passed from backend
+    // OR falls back to Open-Meteo air quality (no key required)
+    async function fetchAQI(city, cardIndex, triggerBtn) {
+        const badge = document.getElementById(`aqi-${cardIndex}`);
+        badge.className = 'aqi-badge loading';
+        badge.textContent = 'Fetching AQI…';
+        badge.classList.remove('hidden');
+        triggerBtn.disabled = true;
+
+        try {
+            // Open-Meteo geocoding → coordinates → air quality (no API key needed)
+            const geoRes = await fetch(
+                `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=en&format=json`
+            );
+            const geoData = await geoRes.json();
+            if (!geoData.results || geoData.results.length === 0) throw new Error('City not found');
+
+            const { latitude, longitude } = geoData.results[0];
+
+            const aqRes = await fetch(
+                `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${latitude}&longitude=${longitude}&current=us_aqi,pm10,pm2_5`
+            );
+            const aqData = await aqRes.json();
+            const aqi = aqData.current?.us_aqi;
+
+            if (aqi === undefined || aqi === null) throw new Error('No AQI data');
+
+            const { label, cls } = aqiCategory(aqi);
+            badge.className = `aqi-badge aqi-${cls}`;
+            badge.innerHTML = `<span class="aqi-dot"></span> AQI ${aqi} — ${label}`;
+        } catch (err) {
+            badge.className = 'aqi-badge aqi-unknown';
+            badge.textContent = 'AQI unavailable';
+        }
+        triggerBtn.disabled = false;
+    }
+
+    function aqiCategory(aqi) {
+        if (aqi <= 50)  return { label: 'Good',           cls: 'good' };
+        if (aqi <= 100) return { label: 'Moderate',       cls: 'moderate' };
+        if (aqi <= 150) return { label: 'Unhealthy for Sensitive Groups', cls: 'usg' };
+        if (aqi <= 200) return { label: 'Unhealthy',      cls: 'unhealthy' };
+        if (aqi <= 300) return { label: 'Very Unhealthy', cls: 'very-unhealthy' };
+        return             { label: 'Hazardous',          cls: 'hazardous' };
+    }
     </script>
 </body>
 </html>
