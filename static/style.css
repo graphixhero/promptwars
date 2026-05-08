@@ -523,3 +523,53 @@ input[type="range"]::-moz-range-thumb {
     color: var(--text-dim);
     letter-spacing: 0.05em;
 }
+
+/* ── Gemini AI button & states ──────────────────────────────────────────── */
+.action-btn.ai-btn {
+    border-color: rgba(212,168,75,0.4);
+    color: var(--accent);
+}
+.action-btn.ai-btn:hover:not(:disabled) {
+    background: var(--accent-dim);
+    border-color: var(--accent);
+}
+.action-btn.ai-done {
+    border-color: rgba(74,222,128,0.3);
+    color: #4ade80;
+    cursor: default;
+}
+
+.ai-loading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 0;
+    font-size: 13px;
+    color: var(--text-muted);
+    font-style: italic;
+}
+.ai-spinner {
+    width: 16px; height: 16px;
+    border: 2px solid rgba(212,168,75,0.2);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    flex-shrink: 0;
+}
+
+.ai-badge {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+}
+
+.ai-error {
+    font-size: 13px;
+    color: #f87171;
+    padding: 8px 0;
+}

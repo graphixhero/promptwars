@@ -1,4 +1,6 @@
 import os
+import json
+import requests
 from flask import Flask, render_template, request, jsonify
 from dotenv import load_dotenv
 
@@ -41,7 +43,7 @@ DESTINATIONS = [
         "itinerary": [
             {"day": 1, "title": "Iconic Paris", "morning": "Eiffel Tower sunrise", "afternoon": "Louvre Museum", "evening": "Seine River cruise"},
             {"day": 2, "title": "Chic Montmartre", "morning": "Sacre-Coeur Basilica", "afternoon": "Boulangerie crawl", "evening": "Moulin Rouge show"},
-            {"day": 3, "title": "Haute Living", "morning": "Champs-Élysées shopping", "afternoon": "Tuileries Garden", "evening": "Michelin star dinner"}
+            {"day": 3, "title": "Haute Living", "morning": "Champs-Elysees shopping", "afternoon": "Tuileries Garden", "evening": "Michelin star dinner"}
         ]
     },
     {
@@ -125,25 +127,26 @@ DESTINATIONS = [
         "itinerary": [
             {"day": 1, "title": "Glacier Majesty", "morning": "Perito Moreno boat tour", "afternoon": "Ice trekking", "evening": "Patagonian lamb roast"},
             {"day": 2, "title": "Towers of Granite", "morning": "Torres del Paine hike", "afternoon": "Wildlife spotting", "evening": "Cozy mountain lodge rest"},
-            {"day": 3, "title": "Lakes & Forests", "morning": "Lake Pehoé sunrise", "afternoon": "Grey Glacier viewpoint", "evening": "Stargazing in the wild"}
+            {"day": 3, "title": "Lakes & Forests", "morning": "Lake Pehoe sunrise", "afternoon": "Grey Glacier viewpoint", "evening": "Stargazing in the wild"}
         ]
     }
 ]
 
+
 @app.route("/")
 def index():
     return render_template("index.html")
+
 
 @app.route("/search", methods=["POST"])
 def search():
     data = request.get_json(force=True, silent=True)
     if not data:
         return jsonify({"error": "Invalid or missing JSON payload"}), 400
-    
+
     user_vibes = set(data.get("vibes", []))
     budget = int(data.get("budget", 10000))
 
-    # Calculate overlap for each destination, filtered by budget
     matches = []
     for dest in DESTINATIONS:
         dest_vibes = set(dest["vibes"])
@@ -152,14 +155,63 @@ def search():
         if cost <= budget:
             matches.append((overlap, dest))
 
-    # Sort by overlap (descending) and take top 3
     matches.sort(key=lambda x: x[0], reverse=True)
     top_destinations = [m[1] for m in matches[:3]]
-    
+
     return jsonify({
         "destinations": top_destinations,
         "map_key": os.getenv("GOOGLE_MAPS_API_KEY", "")
     })
+
+
+@app.route("/itinerary", methods=["POST"])
+def itinerary():
+    data = request.get_json(force=True, silent=True)
+    if not data:
+        return jsonify({"error": "Invalid payload"}), 400
+
+    city      = data.get("city", "")
+    country   = data.get("country", "")
+    vibes     = data.get("vibes", [])
+    travelers = data.get("travelers", 1)
+    budget    = data.get("budget", 5000)
+
+    prompt = (
+        f"You are an expert travel planner. Generate a vivid, personalised 3-day itinerary "
+        f"for {travelers} traveller(s) visiting {city}, {country}. "
+        f"Their vibes: {', '.join(vibes)}. Total budget: ${budget} per person.\n\n"
+        f"Respond ONLY with a valid JSON object, no markdown, no explanation.\n\n"
+        f"Format:\n"
+        f'{{"itinerary": ['
+        f'{{"day": 1, "title": "...", "morning": "...", "afternoon": "...", "evening": "..."}}, '
+        f'{{"day": 2, "title": "...", "morning": "...", "afternoon": "...", "evening": "..."}}, '
+        f'{{"day": 3, "title": "...", "morning": "...", "afternoon": "...", "evening": "..."}}'
+        f']}}'
+    )
+
+    gemini_key = os.getenv("GEMINI_API_KEY", "")
+    if not gemini_key:
+        return jsonify({"error": "Gemini API key not configured"}), 500
+
+    url = (
+        "https://generativelanguage.googleapis.com/v1beta/models/"
+        f"gemini-2.0-flash:generateContent?key={gemini_key}"
+    )
+    payload = {
+        "contents": [{"parts": [{"text": prompt}]}],
+        "generationConfig": {"temperature": 0.8, "maxOutputTokens": 1024}
+    }
+
+    try:
+        res = requests.post(url, json=payload, timeout=15)
+        res.raise_for_status()
+        raw = res.json()["candidates"][0]["content"]["parts"][0]["text"]
+        clean = raw.strip().lstrip("```json").lstrip("```").rstrip("```").strip()
+        parsed = json.loads(clean)
+        return jsonify(parsed)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
