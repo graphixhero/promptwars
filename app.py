@@ -8,11 +8,9 @@ load_dotenv()
 
 app = Flask(__name__)
 
-# Hardcoded Destination Database
-DESTINATIONS = [
+FALLBACK_DESTINATIONS = [
     {
-        "city": "Tokyo",
-        "country": "Japan",
+        "city": "Tokyo", "country": "Japan",
         "vibes": ["Chaos", "Fashion", "Foodie"],
         "tagline": "Neon lights, high-tech subways, and world-class sushi.",
         "estimated_cost": "$2,200",
@@ -23,8 +21,7 @@ DESTINATIONS = [
         ]
     },
     {
-        "city": "Kyoto",
-        "country": "Japan",
+        "city": "Kyoto", "country": "Japan",
         "vibes": ["History", "Spiritual", "Aloof"],
         "tagline": "Ancient temples, bamboo forests, and silent zen gardens.",
         "estimated_cost": "$1,800",
@@ -35,8 +32,7 @@ DESTINATIONS = [
         ]
     },
     {
-        "city": "Paris",
-        "country": "France",
+        "city": "Paris", "country": "France",
         "vibes": ["Fashion", "Romance", "Foodie"],
         "tagline": "The City of Light, pastries, and haute couture.",
         "estimated_cost": "$2,500",
@@ -47,8 +43,7 @@ DESTINATIONS = [
         ]
     },
     {
-        "city": "Marrakech",
-        "country": "Morocco",
+        "city": "Marrakech", "country": "Morocco",
         "vibes": ["Chaos", "History", "Offbeat"],
         "tagline": "Spices, souks, and hidden riads in the Red City.",
         "estimated_cost": "$1,200",
@@ -59,8 +54,7 @@ DESTINATIONS = [
         ]
     },
     {
-        "city": "Reykjavik",
-        "country": "Iceland",
+        "city": "Reykjavik", "country": "Iceland",
         "vibes": ["Nature", "Aloof", "Offbeat"],
         "tagline": "Volcanic landscapes, glaciers, and ethereal northern lights.",
         "estimated_cost": "$2,800",
@@ -71,8 +65,7 @@ DESTINATIONS = [
         ]
     },
     {
-        "city": "New York",
-        "country": "USA",
+        "city": "New York", "country": "USA",
         "vibes": ["Chaos", "Fashion", "Foodie"],
         "tagline": "The concrete jungle where dreams are made of.",
         "estimated_cost": "$3,000",
@@ -83,8 +76,7 @@ DESTINATIONS = [
         ]
     },
     {
-        "city": "Varanasi",
-        "country": "India",
+        "city": "Varanasi", "country": "India",
         "vibes": ["Spiritual", "History", "Offbeat"],
         "tagline": "Life and death on the banks of the sacred Ganges.",
         "estimated_cost": "$800",
@@ -95,8 +87,7 @@ DESTINATIONS = [
         ]
     },
     {
-        "city": "Amalfi Coast",
-        "country": "Italy",
+        "city": "Amalfi Coast", "country": "Italy",
         "vibes": ["Romance", "Nature", "Luxury"],
         "tagline": "Lemon groves, turquoise waters, and cliffside villas.",
         "estimated_cost": "$3,500",
@@ -107,8 +98,7 @@ DESTINATIONS = [
         ]
     },
     {
-        "city": "Singapore",
-        "country": "Singapore",
+        "city": "Singapore", "country": "Singapore",
         "vibes": ["Foodie", "Luxury", "Fashion"],
         "tagline": "A tropical city-state of the future and hawker feasts.",
         "estimated_cost": "$2,400",
@@ -119,8 +109,7 @@ DESTINATIONS = [
         ]
     },
     {
-        "city": "Patagonia",
-        "country": "Chile/Argentina",
+        "city": "Patagonia", "country": "Chile/Argentina",
         "vibes": ["Nature", "Aloof", "Offbeat"],
         "tagline": "End of the world glaciers and jagged peaks.",
         "estimated_cost": "$2,600",
@@ -133,6 +122,59 @@ DESTINATIONS = [
 ]
 
 
+def call_gemini(prompt, temperature=0.8, max_tokens=2048):
+    gemini_key = os.getenv("GEMINI_API_KEY", "")
+    if not gemini_key:
+        raise ValueError("GEMINI_API_KEY not configured")
+
+    url = (
+        "https://generativelanguage.googleapis.com/v1beta/models/"
+        f"gemini-2.0-flash-lite:generateContent?key={gemini_key}"
+    )
+    payload = {
+        "contents": [{"parts": [{"text": prompt}]}],
+        "generationConfig": {"temperature": temperature, "maxOutputTokens": max_tokens}
+    }
+    res = requests.post(url, json=payload, timeout=20)
+    res.raise_for_status()
+    raw = res.json()["candidates"][0]["content"]["parts"][0]["text"]
+    # Strip markdown code fences if present
+    clean = raw.strip()
+    if clean.startswith("```"):
+        clean = clean.split("\n", 1)[-1]
+    if clean.endswith("```"):
+        clean = clean.rsplit("```", 1)[0]
+    return clean.strip()
+
+import time
+
+def call_gemini(prompt, temperature=0.8, max_tokens=2048):
+    gemini_key = os.getenv("GEMINI_API_KEY", "")
+    if not gemini_key:
+        raise ValueError("GEMINI_API_KEY not configured")
+
+    url = (
+        "https://generativelanguage.googleapis.com/v1beta/models/"
+        f"gemini-2.0-flash-lite:generateContent?key={gemini_key}"
+    )
+    payload = {
+        "contents": [{"parts": [{"text": prompt}]}],
+        "generationConfig": {"temperature": temperature, "maxOutputTokens": max_tokens}
+    }
+    for attempt in range(3):
+        res = requests.post(url, json=payload, timeout=20)
+        if res.status_code == 429:
+            time.sleep(3 * (attempt + 1))
+            continue
+        res.raise_for_status()
+        raw = res.json()["candidates"][0]["content"]["parts"][0]["text"]
+        clean = raw.strip()
+        if clean.startswith("```"):
+            clean = clean.split("\n", 1)[-1]
+        if clean.endswith("```"):
+            clean = clean.rsplit("```", 1)[0]
+        return clean.strip()
+    raise Exception("Gemini rate limit hit — try again in 60 seconds")
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -144,24 +186,49 @@ def search():
     if not data:
         return jsonify({"error": "Invalid or missing JSON payload"}), 400
 
-    user_vibes = set(data.get("vibes", []))
-    budget = int(data.get("budget", 10000))
+    vibes = data.get("vibes", [])
+    budget = int(data.get("budget", 5000))
+    travelers = int(data.get("travelers", 1))
 
-    matches = []
-    for dest in DESTINATIONS:
-        dest_vibes = set(dest["vibes"])
-        overlap = len(user_vibes.intersection(dest_vibes))
-        cost = int(dest["estimated_cost"].replace("$", "").replace(",", ""))
-        if cost <= budget:
-            matches.append((overlap, dest))
+    prompt = (
+        f"You are an expert travel curator. Suggest exactly 3 unique travel destinations "
+        f"for {travelers} traveller(s) with these vibes: {', '.join(vibes)}. "
+        f"Budget per person: ${budget}. Only suggest destinations whose realistic cost fits within this budget.\n\n"
+        f"Respond ONLY with a valid JSON object, no markdown, no explanation.\n\n"
+        f"Format:\n"
+        f'{{"destinations": ['
+        f'{{"city": "...", "country": "...", "vibes": ["...", "...", "..."], '
+        f'"tagline": "...", "estimated_cost": "$X,XXX", '
+        f'"itinerary": ['
+        f'{{"day": 1, "title": "...", "morning": "...", "afternoon": "...", "evening": "..."}}, '
+        f'{{"day": 2, "title": "...", "morning": "...", "afternoon": "...", "evening": "..."}}, '
+        f'{{"day": 3, "title": "...", "morning": "...", "afternoon": "...", "evening": "..."}}'
+        f']}}'
+        f']}}'
+    )
 
-    matches.sort(key=lambda x: x[0], reverse=True)
-    top_destinations = [m[1] for m in matches[:3]]
-
-    return jsonify({
-        "destinations": top_destinations,
-        "map_key": os.getenv("GOOGLE_MAPS_API_KEY", "")
-    })
+    try:
+        clean = call_gemini(prompt, temperature=0.85, max_tokens=2048)
+        parsed = json.loads(clean)
+        return jsonify({
+            "destinations": parsed["destinations"],
+            "map_key": os.getenv("GOOGLE_MAPS_API_KEY", "")
+        })
+    except Exception:
+        # Fallback to hardcoded destinations filtered by budget and vibes
+        user_vibes = set(vibes)
+        matches = []
+        for dest in FALLBACK_DESTINATIONS:
+            cost = int(dest["estimated_cost"].replace("$", "").replace(",", ""))
+            overlap = len(user_vibes.intersection(set(dest["vibes"])))
+            if cost <= budget:
+                matches.append((overlap, dest))
+        matches.sort(key=lambda x: x[0], reverse=True)
+        top = [m[1] for m in matches[:3]]
+        return jsonify({
+            "destinations": top,
+            "map_key": os.getenv("GOOGLE_MAPS_API_KEY", "")
+        })
 
 
 @app.route("/itinerary", methods=["POST"])
@@ -189,29 +256,20 @@ def itinerary():
         f']}}'
     )
 
-    gemini_key = os.getenv("GEMINI_API_KEY", "")
-    if not gemini_key:
-        return jsonify({"error": "Gemini API key not configured"}), 500
-
-    url = (
-        "https://generativelanguage.googleapis.com/v1beta/models/"
-        f"gemini-2.0-flash:generateContent?key={gemini_key}"
-    )
-    payload = {
-        "contents": [{"parts": [{"text": prompt}]}],
-        "generationConfig": {"temperature": 0.8, "maxOutputTokens": 1024}
-    }
-
     try:
-        res = requests.post(url, json=payload, timeout=15)
-        res.raise_for_status()
-        raw = res.json()["candidates"][0]["content"]["parts"][0]["text"]
-        clean = raw.strip().lstrip("```json").lstrip("```").rstrip("```").strip()
+        clean = call_gemini(prompt, temperature=0.8, max_tokens=1024)
         parsed = json.loads(clean)
         return jsonify(parsed)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route("/test")
+def test():
+    try:
+        clean = call_gemini('Say {"status": "ok"} and nothing else.', temperature=0, max_tokens=20)
+        return jsonify({"raw": clean})
+    except Exception as e:
+        return jsonify({"error": str(e)})
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
